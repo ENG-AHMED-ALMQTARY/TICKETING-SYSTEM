@@ -1,52 +1,192 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Edit, Trash } from 'lucide-react';
-import { Card, Button, Badge } from '../../components/ui/Base';
-import { UserRole } from '../../types';
-
-const MOCK_USERS = [
-  { id: '1', name: 'John Doe', email: 'consumer@test.com', role: UserRole.CONSUMER },
-  { id: '2', name: 'Sarah Tech', email: 'tech@test.com', role: UserRole.TECHNICIAN },
-  { id: '3', name: 'Mike Manager', email: 'manager@test.com', role: UserRole.MANAGER },
-  { id: '4', name: 'Alice Admin', email: 'admin@test.com', role: UserRole.ADMIN },
-];
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Edit, Trash, Search, Mail, Phone, Briefcase } from 'lucide-react';
+import { Card, Button, Badge, Input } from '../../components/ui/Base';
+import { User } from '../../types';
+import { adminApi } from '../../services/adminApi';
+import { UserCreateModal } from '../../components/admin/UserCreateModal';
+import { UserEditModal } from '../../components/admin/UserEditModal';
+import { ConfirmDeleteModal } from '../../components/admin/ConfirmDeleteModal';
 
 export const UserList: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  
+  // Modal States
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
+
+  const fetchUsers = async () => {
+    try {
+      // Keep loading true only on initial load if list is empty
+      if (users.length === 0) setIsLoading(true);
+      const data = await adminApi.getUsers();
+      setUsers(data);
+    } catch (error) {
+      console.error('Failed to fetch users', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleDelete = async () => {
+    if (deletingUser) {
+      await adminApi.deleteUser(deletingUser.id);
+      fetchUsers(); // Refresh list
+    }
+  };
+
+  const filteredUsers = users.filter(user => 
+    user.name.toLowerCase().includes(search.toLowerCase()) || 
+    user.email.toLowerCase().includes(search.toLowerCase()) ||
+    user.role.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Header & Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
            <h1 className="text-3xl font-bold text-white font-display">User Management</h1>
-           <p className="text-slate-400">Manage system access and roles.</p>
+           <p className="text-slate-400">Manage system access, roles, and permissions.</p>
         </div>
-        <Button><Plus className="w-4 h-4 mr-2" /> Add User</Button>
+        <Button onClick={() => setIsCreateOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" /> Add User
+        </Button>
       </div>
 
+      {/* Search & Filter */}
+      <div className="flex items-center bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+        <div className="relative flex-1 max-w-md">
+           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+           <Input 
+             placeholder="Search users by name, email, or role..." 
+             className="pl-10"
+             value={search}
+             onChange={(e) => setSearch(e.target.value)}
+           />
+        </div>
+      </div>
+
+      {/* User Table */}
       <Card className="overflow-hidden p-0">
-        <table className="w-full text-left">
-          <thead className="bg-slate-900/50 text-slate-400 uppercase text-xs">
-            <tr>
-              <th className="px-6 py-4">Name</th>
-              <th className="px-6 py-4">Email</th>
-              <th className="px-6 py-4">Role</th>
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-700">
-            {MOCK_USERS.map(user => (
-              <tr key={user.id} className="hover:bg-slate-800/50 transition-colors">
-                <td className="px-6 py-4 font-medium">{user.name}</td>
-                <td className="px-6 py-4 text-slate-400">{user.email}</td>
-                <td className="px-6 py-4"><Badge>{user.role}</Badge></td>
-                <td className="px-6 py-4 text-right space-x-2">
-                  <button className="text-indigo-400 hover:text-white"><Edit className="w-4 h-4" /></button>
-                  <button className="text-red-400 hover:text-white"><Trash className="w-4 h-4" /></button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {isLoading ? (
+           <div className="flex justify-center items-center py-20">
+             <div className="animate-spin w-8 h-8 border-b-2 border-indigo-500 rounded-full"></div>
+           </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-slate-900/50 text-slate-400 uppercase text-xs">
+                <tr>
+                  <th className="px-6 py-4 font-semibold tracking-wider">User Profile</th>
+                  <th className="px-6 py-4 font-semibold tracking-wider">Contact</th>
+                  <th className="px-6 py-4 font-semibold tracking-wider">Role & Sector</th>
+                  <th className="px-6 py-4 font-semibold tracking-wider text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700">
+                <AnimatePresence>
+                  {filteredUsers.map(user => (
+                    <motion.tr 
+                      key={user.id} 
+                      layout
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="hover:bg-slate-800/50 transition-colors group"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                            {user.name.charAt(0)}
+                          </div>
+                          <div>
+                            <div className="font-bold text-white">{user.name}</div>
+                            <div className="text-xs text-slate-500">ID: {user.id}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center text-sm text-slate-300">
+                            <Mail className="w-3 h-3 mr-2 text-slate-500" /> {user.email}
+                          </div>
+                          {user.phone && (
+                            <div className="flex items-center text-sm text-slate-300">
+                              <Phone className="w-3 h-3 mr-2 text-slate-500" /> {user.phone}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="space-y-2">
+                          <Badge variant={user.role === 'ADMIN' ? 'warning' : 'info'}>{user.role}</Badge>
+                          {user.sector && (
+                            <div className="flex items-center text-xs text-slate-400">
+                              <Briefcase className="w-3 h-3 mr-1" /> {user.sector}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-2">
+                        <button 
+                          onClick={() => setEditingUser(user)}
+                          className="p-2 text-indigo-400 hover:text-white hover:bg-indigo-500/20 rounded-lg transition-all"
+                          title="Edit User"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => setDeletingUser(user)}
+                          className="p-2 text-red-400 hover:text-white hover:bg-red-500/20 rounded-lg transition-all"
+                          title="Delete User"
+                        >
+                          <Trash className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+                {filteredUsers.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
+                      No users found matching "{search}"
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
+
+      {/* Modals */}
+      <UserCreateModal 
+        isOpen={isCreateOpen} 
+        onClose={() => setIsCreateOpen(false)} 
+        onSuccess={fetchUsers} 
+      />
+      
+      <UserEditModal 
+        isOpen={!!editingUser} 
+        user={editingUser}
+        onClose={() => setEditingUser(null)} 
+        onSuccess={fetchUsers} 
+      />
+
+      <ConfirmDeleteModal 
+        isOpen={!!deletingUser}
+        userName={deletingUser?.name || ''}
+        onClose={() => setDeletingUser(null)}
+        onConfirm={handleDelete}
+      />
     </motion.div>
   );
 };

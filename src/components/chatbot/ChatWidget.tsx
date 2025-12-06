@@ -1,8 +1,10 @@
+
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Loader2, FileText } from 'lucide-react';
 import { useChatbotStore } from '../../store/useChatbotStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useLanguageStore } from '../../store/useLanguageStore';
 import { VoiceRecorder } from './VoiceRecorder';
 import { ImageUploader } from './ImageUploader';
 
@@ -12,6 +14,7 @@ export const ChatWidget: React.FC = () => {
     addMessage, isThinking, initGuestWelcome, updateGuestDraft, guestStep 
   } = useChatbotStore();
   const { isAuthenticated } = useAuthStore();
+  const { t, direction } = useLanguageStore();
   
   const [inputText, setInputText] = React.useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -31,7 +34,7 @@ export const ChatWidget: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isThinking]);
+  }, [messages, isThinking, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +74,26 @@ export const ChatWidget: React.FC = () => {
     }, 1000);
   };
 
+  // Determine alignment based on direction and sender
+  const getBubbleAlignment = (sender: 'user' | 'bot') => {
+    if (direction === 'rtl') {
+      return sender === 'user' ? 'justify-start' : 'justify-end';
+    }
+    return sender === 'user' ? 'justify-end' : 'justify-start';
+  };
+
+  const getBubbleStyle = (sender: 'user' | 'bot') => {
+    if (sender === 'user') {
+      return direction === 'rtl' 
+        ? 'bg-indigo-600 text-white rounded-tl-none' // User left in RTL
+        : 'bg-indigo-600 text-white rounded-tr-none'; // User right in LTR
+    } else {
+      return direction === 'rtl'
+        ? 'bg-slate-800 text-slate-200 rounded-tr-none border border-slate-700' // Bot right in RTL
+        : 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700'; // Bot left in LTR
+    }
+  };
+
   return (
     <>
       <AnimatePresence>
@@ -79,21 +102,21 @@ export const ChatWidget: React.FC = () => {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-24 right-6 w-96 h-[500px] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden"
+            className={`fixed bottom-24 ${direction === 'rtl' ? 'left-6' : 'right-6'} w-96 h-[500px] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden`}
           >
             {/* Header */}
             <div className="p-4 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 rtl:space-x-reverse">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center">
                   <span className="text-white text-xs font-bold">AI</span>
                 </div>
                 <div>
                   <h3 className="font-bold text-white text-sm">
-                    {isAuthenticated ? 'Support Assistant' : 'Guest Support'}
+                    {isAuthenticated ? t('supportAssistant') : t('guestSupport')}
                   </h3>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-1 rtl:space-x-reverse">
                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <span className="text-xs text-slate-400">Online</span>
+                    <span className="text-xs text-slate-400">{t('online')}</span>
                   </div>
                 </div>
               </div>
@@ -107,14 +130,10 @@ export const ChatWidget: React.FC = () => {
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${getBubbleAlignment(msg.sender)}`}
                 >
                   <div
-                    className={`max-w-[80%] p-3 rounded-2xl text-sm ${
-                      msg.sender === 'user'
-                        ? 'bg-indigo-600 text-white rounded-tr-none'
-                        : 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700'
-                    }`}
+                    className={`max-w-[80%] p-3 rounded-2xl text-sm ${getBubbleStyle(msg.sender)}`}
                   >
                     {/* Render Attachments */}
                     {msg.attachments && msg.attachments.length > 0 && (
@@ -124,7 +143,7 @@ export const ChatWidget: React.FC = () => {
                             {url.startsWith('data:image') ? (
                                <img src={url} alt="User upload" className="max-w-full h-auto object-cover" />
                             ) : (
-                               <div className="bg-slate-700 p-2 flex items-center space-x-2">
+                               <div className="bg-slate-700 p-2 flex items-center space-x-2 rtl:space-x-reverse">
                                   <FileText className="w-4 h-4" />
                                   <span className="text-xs truncate">Attachment {idx + 1}</span>
                                </div>
@@ -134,13 +153,13 @@ export const ChatWidget: React.FC = () => {
                       </div>
                     )}
                     {/* Render Text */}
-                    {msg.text && <p>{msg.text}</p>}
+                    {msg.text && <p className="whitespace-pre-wrap">{msg.text}</p>}
                   </div>
                 </div>
               ))}
               {isThinking && (
-                <div className="flex justify-start">
-                  <div className="bg-slate-800 p-3 rounded-2xl rounded-tl-none border border-slate-700 flex space-x-1 items-center">
+                <div className={`flex ${direction === 'rtl' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`bg-slate-800 p-3 rounded-2xl border border-slate-700 flex space-x-1 items-center ${direction === 'rtl' ? 'rounded-tr-none' : 'rounded-tl-none'}`}>
                     <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                     <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                     <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -152,24 +171,24 @@ export const ChatWidget: React.FC = () => {
 
             {/* Input */}
             <form onSubmit={handleSubmit} className="p-4 bg-slate-800 border-t border-slate-700">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 rtl:space-x-reverse">
                 <ImageUploader onImageSelected={handleImageUpload} />
                 <div className="relative flex-1">
                   <input
                     type="text"
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    placeholder={guestStep !== 'NONE' ? "Answer the bot..." : "Type a message..."}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-full px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                    placeholder={guestStep !== 'NONE' ? t('answerBot') : t('typeMessage')}
+                    className={`w-full bg-slate-900 border border-slate-700 rounded-full py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${direction === 'rtl' ? 'pl-10 pr-4' : 'pr-10 pl-4'}`}
                   />
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <div className={`absolute top-1/2 -translate-y-1/2 ${direction === 'rtl' ? 'left-2' : 'right-2'}`}>
                     <VoiceRecorder onRecordingComplete={handleVoiceInput} />
                   </div>
                 </div>
                 <button 
                   type="submit" 
                   disabled={!inputText.trim() || isThinking}
-                  className="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className={`p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${direction === 'rtl' ? 'rotate-180' : ''}`}
                 >
                   {isThinking ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                 </button>
@@ -183,7 +202,7 @@ export const ChatWidget: React.FC = () => {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={toggleOpen}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 rounded-full shadow-lg shadow-indigo-500/30 flex items-center justify-center text-white z-50 hover:bg-indigo-500 transition-colors"
+        className={`fixed bottom-6 ${direction === 'rtl' ? 'left-6' : 'right-6'} w-14 h-14 bg-indigo-600 rounded-full shadow-lg shadow-indigo-500/30 flex items-center justify-center text-white z-50 hover:bg-indigo-500 transition-colors`}
       >
         {isOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
       </motion.button>

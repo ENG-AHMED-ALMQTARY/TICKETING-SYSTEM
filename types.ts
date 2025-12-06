@@ -1,3 +1,4 @@
+
 export enum UserRole {
   GUEST = 'GUEST',
   CONSUMER = 'CONSUMER',
@@ -37,6 +38,16 @@ export interface User {
   sector?: string;
 }
 
+export type CreateUserPayload = {
+  name: string;
+  email: string;
+  phone: string;
+  role: UserRole;
+  sector?: string;
+};
+
+export type UpdateUserPayload = Partial<CreateUserPayload>;
+
 export interface Ticket {
   id: string;
   referenceNumber: string;
@@ -62,6 +73,8 @@ export interface TimelineItem {
   content: string;
   userId: string;
   timestamp: string;
+  status?: TicketStatus; // Added for status change events
+  user?: Partial<User>; // Added for displaying author details immediately
 }
 
 export interface Notification {
@@ -97,4 +110,28 @@ export interface ChartDataPoint {
   name: string;
   value: number;
   [key: string]: any;
+}
+
+export type ChartType = 'AREA' | 'BAR' | 'PIE' | 'LINE' | 'RADAR';
+
+export interface ChartConfig {
+  id: string;
+  title: string;
+  type: ChartType;
+  metric: string;
+  dataSource: string; // 'tickets', 'users', 'performance'
+  groupBy?: string; // 'sector', 'status', 'priority', 'date'
+  granularity?: 'daily' | 'weekly' | 'monthly';
+  dateFrom?: string;
+  dateTo?: string;
+  filters?: Record<string, any>;
+  createdBy: string;
+  createdAt: string;
+  visibility: UserRole[];
+  description?: string;
+  options?: {
+    color?: string;
+    showLegend?: boolean;
+    [key: string]: any;
+  };
 }

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Sidebar } from './components/layout/Sidebar';
@@ -15,12 +16,19 @@ import { UserList } from './pages/admin/UserList';
 import { LandingPage } from './pages/LandingPage';
 import { useAuthStore } from './store/useAuthStore';
 import { useTicketStore } from './store/useTicketStore';
+import { useLanguageStore } from './store/useLanguageStore';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuthStore();
   const { createTicket } = useTicketStore();
+  const { direction } = useLanguageStore();
   const [showClaimModal, setShowClaimModal] = useState(false);
   const [guestTicketData, setGuestTicketData] = useState<any>(null);
+
+  // Ensure direction is set correctly on mount/update
+  useEffect(() => {
+    document.documentElement.setAttribute('dir', direction);
+  }, [direction]);
 
   useEffect(() => {
     // Check for guest ticket on mount if user is logged in
@@ -59,7 +67,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="flex min-h-screen bg-[#0f172a] text-slate-100 font-sans">
       <Sidebar />
-      <div className="flex-1 ml-64 p-8 overflow-y-auto relative">
+      <div className={`flex-1 ${direction === 'rtl' ? 'mr-64 ml-0' : 'ml-64 mr-0'} p-8 overflow-y-auto relative transition-all duration-300`}>
         <Header />
         {children}
       </div>

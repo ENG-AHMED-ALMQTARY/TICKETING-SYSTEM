@@ -1,13 +1,16 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, User as UserIcon, RotateCcw } from 'lucide-react';
+import { Bell, User as UserIcon, RotateCcw, Globe } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useNotificationStore } from '../../store/useNotificationStore';
+import { useLanguageStore } from '../../store/useLanguageStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Header: React.FC = () => {
   const { user } = useAuthStore();
   const { notifications, unreadCount, markAsRead } = useNotificationStore();
+  const { language, setLanguage, t } = useLanguageStore();
   const [showNotifs, setShowNotifs] = useState(false);
   const navigate = useNavigate();
 
@@ -18,18 +21,31 @@ export const Header: React.FC = () => {
     }
   };
 
+  const toggleLanguage = () => {
+    setLanguage(language === 'en' ? 'ar' : 'en');
+  };
+
   return (
     <div className="flex justify-between items-center mb-8 bg-slate-800/50 backdrop-blur-sm p-4 rounded-xl border border-slate-700">
        <div className="flex-1">
           {/* Breadcrumbs or Title could go here */}
        </div>
-       <div className="flex items-center space-x-6">
+       <div className="flex items-center space-x-4 rtl:space-x-reverse">
           
+          {/* Language Toggle */}
+          <button
+            onClick={toggleLanguage}
+            className="flex items-center space-x-1 rtl:space-x-reverse px-3 py-1.5 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-300 hover:text-white hover:border-indigo-500 transition-colors"
+          >
+            <Globe className="w-4 h-4" />
+            <span className="font-mono font-bold pt-0.5">{language.toUpperCase()}</span>
+          </button>
+
           {/* Dev/Admin Reset Tool */}
           <button
             onClick={handleResetState}
             className="p-2 text-slate-500 hover:text-red-400 transition-colors"
-            title="Reset Local State (Dev)"
+            title={t('resetState')}
           >
             <RotateCcw className="w-5 h-5" />
           </button>
@@ -53,11 +69,11 @@ export const Header: React.FC = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute right-0 mt-2 w-80 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden"
+                  className="absolute right-0 rtl:right-auto rtl:left-0 mt-2 w-80 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden"
                 >
                   <div className="p-3 border-b border-slate-800 flex justify-between items-center">
-                    <span className="font-bold text-sm">Notifications</span>
-                    <button onClick={() => navigate('/notifications')} className="text-xs text-indigo-400 hover:underline">View All</button>
+                    <span className="font-bold text-sm">{t('notifications')}</span>
+                    <button onClick={() => navigate('/notifications')} className="text-xs text-indigo-400 hover:underline">{t('viewAll')}</button>
                   </div>
                   <div className="max-h-64 overflow-y-auto">
                     {notifications.length === 0 ? (
@@ -87,8 +103,8 @@ export const Header: React.FC = () => {
           </div>
           
           {/* Profile */}
-          <div className="flex items-center space-x-3 pl-6 border-l border-slate-700">
-            <div className="text-right hidden md:block">
+          <div className="flex items-center space-x-3 rtl:space-x-reverse pl-6 rtl:pl-0 rtl:pr-6 border-l rtl:border-l-0 rtl:border-r border-slate-700">
+            <div className="text-right rtl:text-left hidden md:block">
               <p className="text-sm font-medium text-white">{user?.name}</p>
               <p className="text-xs text-slate-400">{user?.role}</p>
             </div>

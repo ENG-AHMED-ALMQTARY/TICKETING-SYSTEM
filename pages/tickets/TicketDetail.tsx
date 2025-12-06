@@ -1,33 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ArrowLeft, User, Shield, Share2, Tag } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, User, Share2, Tag, ChevronDown } from 'lucide-react';
 import { useTicketStore } from '../../store/useTicketStore';
-import { ticketsApi } from '../../services/ticketsApi';
-import { TimelineItem } from '../../types';
+import { useAuthStore } from '../../store/useAuthStore';
+import { TicketStatus, UserRole } from '../../types';
 import { Card, Badge, Button } from '../../components/ui/Base';
 import { SLAIndicator } from '../../components/tickets/SLAIndicator';
 import { AttachmentPreview } from '../../components/tickets/AttachmentPreview';
 import { TicketTimeline } from '../../components/tickets/TicketTimeline';
+import { CommentBox } from '../../components/tickets/CommentBox';
 
 export const TicketDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { currentTicket, fetchTicketById, isLoading } = useTicketStore();
-  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
-  const [timelineLoading, setTimelineLoading] = useState(false);
+  const { user } = useAuthStore();
+  const { 
+    currentTicket, timeline, isLoading, 
+    fetchTicketById, fetchTimeline, updateTicketStatus, addComment 
+  } = useTicketStore();
+  
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   useEffect(() => {
     if (id) {
       fetchTicketById(id);
-      
-      // Fetch Timeline locally as it's specific to this view
-      setTimelineLoading(true);
-      ticketsApi.getTimeline(id)
-        .then(setTimeline)
-        .finally(() => setTimelineLoading(false));
+      fetchTimeline(id);
     }
-  }, [id, fetchTicketById]);
+  }, [id, fetchTicketById, fetchTimeline]);
 
   if (isLoading || !currentTicket) {
     return (
@@ -36,6 +36,20 @@ export const TicketDetail: React.FC = () => {
       </div>
     );
   }
+
+  const handleStatusChange = async (newStatus: TicketStatus) => {
+    if (!id) return;
+    await updateTicketStatus(id, newStatus);
+    setShowStatusMenu(false);
+  };
+
+  const handleAddComment = async (message: string) => {
+    if (!id) return;
+    await addComment(id, message);
+  };
+
+  // Determine available actions based on role and current status
+  const canUpdateStatus = user?.role === UserRole.ADMIN || user?.role === UserRole.MANAGER || user?.role === UserRole.TECHNICIAN;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-12">
@@ -51,7 +65,36 @@ export const TicketDetail: React.FC = () => {
           <Button variant="secondary" size="sm">
             <Share2 className="w-4 h-4 mr-2" /> Share
           </Button>
-          <Button size="sm">Update Status</Button>
+          
+          {canUpdateStatus && (
+            <div className="relative">
+              <Button size="sm" onClick={() => setShowStatusMenu(!showStatusMenu)}>
+                Update Status <ChevronDown className="w-4 h-4 ml-2" />
+              </Button>
+              <AnimatePresence>
+                {showStatusMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-20 overflow-hidden"
+                  >
+                     <div className="p-1">
+                        {Object.values(TicketStatus).map((status) => (
+                           <button
+                             key={status}
+                             onClick={() => handleStatusChange(status)}
+                             className={`w-full text-left px-4 py-2 text-sm rounded-lg hover:bg-slate-800 transition-colors ${currentTicket.status === status ? 'text-indigo-400 font-bold' : 'text-slate-300'}`}
+                           >
+                             {status}
+                           </button>
+                        ))}
+                     </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </div>
 
@@ -63,7 +106,9 @@ export const TicketDetail: React.FC = () => {
             <span className="text-sm font-mono text-slate-500 px-2 py-1 bg-slate-800 rounded">{currentTicket.referenceNumber}</span>
           </div>
           <div className="flex items-center space-x-3">
-            <Badge variant={currentTicket.status === 'OPEN' ? 'info' : 'success'}>{currentTicket.status}</Badge>
+            <Badge variant={currentTicket.status === 'OPEN' ? 'info' : currentTicket.status === 'RESOLVED' ? 'success' : 'warning'}>
+              {currentTicket.status}
+            </Badge>
             <span className={`text-xs font-bold px-2 py-0.5 rounded border ${
               currentTicket.priority === 'CRITICAL' ? 'border-red-500/50 text-red-400 bg-red-500/10' :
               currentTicket.priority === 'HIGH' ? 'border-orange-500/50 text-orange-400 bg-orange-500/10' :
@@ -107,17 +152,8 @@ export const TicketDetail: React.FC = () => {
             <AttachmentPreview attachments={currentTicket.attachments} />
           </Card>
 
-          {/* Comments / Activity Feed Placeholder */}
-          <Card>
-             <h3 className="text-lg font-bold text-white mb-4">Discussion</h3>
-             <textarea 
-               placeholder="Add a comment..."
-               className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px]"
-             />
-             <div className="mt-2 flex justify-end">
-               <Button size="sm">Post Comment</Button>
-             </div>
-          </Card>
+          {/* Comment Box */}
+          <CommentBox onSubmit={handleAddComment} />
         </div>
 
         {/* Sidebar (Right Column) */}
@@ -156,13 +192,7 @@ export const TicketDetail: React.FC = () => {
           {/* Timeline */}
           <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
             <h3 className="text-lg font-bold text-white mb-6">Activity History</h3>
-            {timelineLoading ? (
-              <div className="flex justify-center py-4">
-                <div className="animate-spin h-6 w-6 border-2 border-indigo-500 rounded-full border-t-transparent"></div>
-              </div>
-            ) : (
-              <TicketTimeline items={timeline} />
-            )}
+            <TicketTimeline items={timeline} />
           </div>
 
         </div>

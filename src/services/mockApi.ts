@@ -1,6 +1,6 @@
 import { User, UserRole, ChartConfig, ChartDataPoint } from '../types';
 
-const DELAY = 600;
+const DELAY = 400;
 
 const mockUsers: User[] = [
   { id: 'u1', name: 'John Doe', email: 'consumer@test.com', role: UserRole.CONSUMER },
@@ -23,7 +23,6 @@ export const api = {
       return delay(user);
     },
     getCurrentUser: async (): Promise<User | null> => {
-      // Simulate session check
       return delay(mockUsers[0]); 
     }
   },
@@ -51,30 +50,30 @@ export const api = {
         ]
       });
     },
-    fetchAnalytics: async (config: Partial<ChartConfig> | any) => {
-      // Return filtered mock data based on config
-      console.log('Fetching analytics with config:', config);
+    fetchAnalytics: async (config: Partial<ChartConfig> & { filters?: any }) => {
+      // Simulate data processing based on config
+      console.log('API: Fetching analytics', config);
       
-      const isTimeSeries = ['AREA', 'LINE', 'BAR'].includes(config.type) && config.groupBy === 'date';
-      const isCategorical = ['PIE', 'RADAR', 'BAR'].includes(config.type) && config.groupBy !== 'date';
-
+      const isTimeSeries = ['AREA', 'LINE', 'BAR'].includes(config.type || '') && config.groupBy === 'date';
+      const isSector = config.groupBy === 'sector';
+      
       let data: ChartDataPoint[] = [];
 
-      if (config.groupBy === 'date' || !config.groupBy) {
-        // Time series mock data
+      // Generate random mock data based on configuration
+      if (config.groupBy === 'date' || (!config.groupBy && isTimeSeries)) {
         const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         data = days.map(day => ({
           name: day,
-          value: Math.floor(Math.random() * 50) + 10,
-          uv: Math.floor(Math.random() * 50) + 10 // Second metric for fun
+          value: Math.floor(Math.random() * 80) + 20,
+          uv: Math.floor(Math.random() * 60) + 10 
         }));
-      } else if (config.groupBy === 'sector') {
+      } else if (isSector) {
         data = [
-          { name: 'Retail', value: Math.floor(Math.random() * 500) },
-          { name: 'Logistics', value: Math.floor(Math.random() * 300) },
-          { name: 'Tech', value: Math.floor(Math.random() * 300) },
-          { name: 'Health', value: Math.floor(Math.random() * 200) },
-          { name: 'Finance', value: Math.floor(Math.random() * 100) },
+          { name: 'Retail', value: Math.floor(Math.random() * 500) + 100 },
+          { name: 'Logistics', value: Math.floor(Math.random() * 300) + 50 },
+          { name: 'Tech', value: Math.floor(Math.random() * 300) + 50 },
+          { name: 'Health', value: Math.floor(Math.random() * 200) + 20 },
+          { name: 'Finance', value: Math.floor(Math.random() * 100) + 10 },
         ];
       } else if (config.groupBy === 'status') {
         data = [
@@ -85,19 +84,31 @@ export const api = {
         ];
       } else if (config.groupBy === 'priority') {
         data = [
-          { name: 'Low', value: Math.floor(Math.random() * 100) },
-          { name: 'Medium', value: Math.floor(Math.random() * 200) },
-          { name: 'High', value: Math.floor(Math.random() * 80) },
-          { name: 'Critical', value: Math.floor(Math.random() * 20) },
+          { name: 'Low', value: 45 },
+          { name: 'Medium', value: 80 },
+          { name: 'High', value: 35 },
+          { name: 'Critical', value: 12 },
+        ];
+      } else if (config.groupBy === 'technician') {
+        data = [
+          { name: 'Sarah', value: 45 },
+          { name: 'Mike', value: 32 },
+          { name: 'John', value: 28 },
+          { name: 'Alice', value: 15 },
         ];
       } else {
-        // Default random data
+        // Fallback
         data = [
           { name: 'A', value: 400 },
           { name: 'B', value: 300 },
           { name: 'C', value: 300 },
           { name: 'D', value: 200 },
         ];
+      }
+
+      // Simulate filter impact (reduce values if filters applied)
+      if (config.filters && Object.keys(config.filters).length > 0) {
+        data = data.map(d => ({ ...d, value: Math.floor(d.value * 0.7) }));
       }
 
       return delay(data);
