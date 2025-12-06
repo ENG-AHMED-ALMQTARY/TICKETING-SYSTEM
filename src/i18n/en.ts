@@ -46,6 +46,18 @@ export const en: Record<string, string> = {
   postComment: "Post Comment",
   addCommentPlaceholder: "Add a comment or internal note...",
   
+  // Ticket Create & Detail
+  createNewTicket: "Create New Ticket",
+  createTicketSubtitle: "Please provide detailed information about the issue.",
+  backToTickets: "Back to Tickets",
+  ticketSector: "Sector",
+  serviceCategory: "Service Category",
+  slaTimer: "SLA Timer",
+  assignedTechnician: "Assigned Technician",
+  unassigned: "Unassigned",
+  waitingDispatch: "Waiting for dispatch",
+  currentlyActive: "Currently Active",
+
   // Analytics
   analyticsDashboard: "Analytics Dashboard",
   analyticsSubtitle: "Deep dive into system metrics and performance.",
@@ -63,6 +75,34 @@ export const en: Record<string, string> = {
   uploadImage: "Upload Image",
   startRecording: "Start Recording",
   
+  // Admin & Users
+  userManagement: "User Management",
+  userManagementSubtitle: "Manage system access, roles, and permissions.",
+  addUser: "Add User",
+  searchUsers: "Search users by name, email, or role...",
+  userProfile: "User Profile",
+  contact: "Contact",
+  roleSector: "Role & Sector",
+  editUser: "Edit User",
+  deleteUser: "Delete User",
+  noUsersFound: "No users found matching",
+
+  // Auth
+  signInTitle: "Welcome Back",
+  signInSubtitle: "Sign in to access your dashboard",
+  emailLabel: "Email Address",
+  signInButton: "Sign In",
+  testAccounts: "Available Test Accounts",
+
+  // Notifications
+  markAllRead: "Mark all as read",
+  allNotifications: "All Notifications",
+  unreadOnly: "Unread Only",
+  noNotifications: "No notifications found",
+  caughtUp: "You're all caught up!",
+  emptyNotifications: "You don't have any notifications yet.",
+  viewDetails: "View Details",
+
   // Common
   loading: "Loading...",
   save: "Save",
@@ -71,4 +111,5 @@ export const en: Record<string, string> = {
   edit: "Edit",
   viewAll: "View All",
   actions: "Actions",
+  language: "Language"
 };

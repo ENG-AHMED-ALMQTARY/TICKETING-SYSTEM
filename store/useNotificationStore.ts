@@ -64,7 +64,7 @@ export const useNotificationStore = create<NotificationState>(
       }))
     }),
     'notification_store',
-    (state) => ({
+    (state: NotificationState) => ({
       notifications: state.notifications,
       unreadCount: state.unreadCount
     })

@@ -1,4 +1,5 @@
 import { ChatMessage } from '../types';
+import { ChatContext } from '../store/useChatbotStore';
 
 // Safely access environment variable to prevent runtime errors
 // Use optional chaining for import.meta.env and fallback to process.env if available
@@ -8,7 +9,7 @@ const API_KEY = ((import.meta as any).env?.VITE_GEMINI_API_KEY) ||
 const SYSTEM_PROMPT = `You are a helpful assistant for a ticketing system. 
 You help classify issues, collect information, and guide users.`;
 
-export async function sendToGemini(messages: ChatMessage[]): Promise<ChatMessage> {
+export async function sendToGemini(messages: ChatMessage[], context?: ChatContext): Promise<ChatMessage> {
   if (!API_KEY) {
     console.warn("VITE_GEMINI_API_KEY is not defined. Using mock response.");
     return {
@@ -17,6 +18,17 @@ export async function sendToGemini(messages: ChatMessage[]): Promise<ChatMessage
       text: "I'm currently in offline mode (API Key missing). I can still help you draft a ticket if you type 'start'.",
       timestamp: Date.now()
     };
+  }
+
+  // Build Context String
+  let systemInstructionText = SYSTEM_PROMPT;
+  if (context) {
+    const contextStr = `\n\nCURRENT CONTEXT:\nUser is viewing page: ${context.page} (${context.route}).`;
+    let ticketStr = "";
+    if (context.ticketRef) {
+      ticketStr = `\nActive Ticket Details:\nReference: ${context.ticketRef}\nStatus: ${context.ticketStatus}\nPriority: ${context.ticketPriority}\nTicket ID: ${context.ticketId}`;
+    }
+    systemInstructionText += contextStr + ticketStr;
   }
 
   // Filter and map messages to Gemini format
@@ -31,7 +43,7 @@ export async function sendToGemini(messages: ChatMessage[]): Promise<ChatMessage
   const payload = {
     contents,
     systemInstruction: {
-      parts: [{ text: SYSTEM_PROMPT }]
+      parts: [{ text: systemInstructionText }]
     }
   };
 

@@ -46,6 +46,18 @@ export const ar: Record<string, string> = {
   postComment: "نشر تعليق",
   addCommentPlaceholder: "أضف تعليقاً أو ملاحظة داخلية...",
 
+  // Ticket Create & Detail
+  createNewTicket: "إنشاء تذكرة جديدة",
+  createTicketSubtitle: "يرجى تقديم معلومات مفصلة حول المشكلة.",
+  backToTickets: "العودة إلى التذاكر",
+  ticketSector: "القطاع",
+  serviceCategory: "فئة الخدمة",
+  slaTimer: "مؤقت اتفاقية مستوى الخدمة",
+  assignedTechnician: "الفني المعين",
+  unassigned: "غير معين",
+  waitingDispatch: "في انتظار التعيين",
+  currentlyActive: "نشط حالياً",
+
   // Analytics
   analyticsDashboard: "لوحة تحليلات البيانات",
   analyticsSubtitle: "تعمق في مقاييس النظام والأداء.",
@@ -63,6 +75,34 @@ export const ar: Record<string, string> = {
   uploadImage: "رفع صورة",
   startRecording: "بدء التسجيل",
 
+  // Admin & Users
+  userManagement: "إدارة المستخدمين",
+  userManagementSubtitle: "إدارة الوصول إلى النظام والأدوار والأذونات.",
+  addUser: "إضافة مستخدم",
+  searchUsers: "البحث بالاسم أو البريد الإلكتروني أو الدور...",
+  userProfile: "ملف المستخدم",
+  contact: "معلومات الاتصال",
+  roleSector: "الدور والقطاع",
+  editUser: "تعديل المستخدم",
+  deleteUser: "حذف المستخدم",
+  noUsersFound: "لم يتم العثور على مستخدمين",
+
+  // Auth
+  signInTitle: "مرحباً بعودتك",
+  signInSubtitle: "سجل الدخول للوصول إلى لوحة التحكم",
+  emailLabel: "البريد الإلكتروني",
+  signInButton: "تسجيل الدخول",
+  testAccounts: "حسابات تجريبية متاحة",
+
+  // Notifications
+  markAllRead: "تحديد الكل كمقروء",
+  allNotifications: "كل الإشعارات",
+  unreadOnly: "غير المقروءة فقط",
+  noNotifications: "لم يتم العثور على إشعارات",
+  caughtUp: "أنت مطلع على كل شيء!",
+  emptyNotifications: "ليس لديك أي إشعارات بعد.",
+  viewDetails: "عرض التفاصيل",
+
   // Common
   loading: "جاري التحميل...",
   save: "حفظ",
@@ -71,4 +111,5 @@ export const ar: Record<string, string> = {
   edit: "تعديل",
   viewAll: "عرض الكل",
   actions: "إجراءات",
+  language: "اللغة"
 };

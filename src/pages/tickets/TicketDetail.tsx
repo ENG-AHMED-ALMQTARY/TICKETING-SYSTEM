@@ -1,0 +1,223 @@
+
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, User, Share2, Tag, ChevronDown } from 'lucide-react';
+import { useTicketStore } from '../../store/useTicketStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useLanguageStore } from '../../store/useLanguageStore';
+import { useChatbotStore } from '../../store/useChatbotStore';
+import { TicketStatus, UserRole } from '../../types';
+import { Card, Badge, Button } from '../../components/ui/Base';
+import { SLAIndicator } from '../../components/tickets/SLAIndicator';
+import { AttachmentPreview } from '../../components/tickets/AttachmentPreview';
+import { TicketTimeline } from '../../components/tickets/TicketTimeline';
+import { CommentBox } from '../../components/tickets/CommentBox';
+
+export const TicketDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const { t, direction } = useLanguageStore();
+  const { setContext } = useChatbotStore();
+  const { 
+    currentTicket, timeline, isLoading, 
+    fetchTicketById, fetchTimeline, updateTicketStatus, addComment 
+  } = useTicketStore();
+  
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      fetchTicketById(id);
+      fetchTimeline(id);
+    }
+  }, [id, fetchTicketById, fetchTimeline]);
+
+  // Update Chatbot Context when ticket data is available
+  useEffect(() => {
+    if (currentTicket) {
+      setContext({
+        page: 'Ticket Detail',
+        route: `/tickets/${currentTicket.id}`,
+        timestamp: Date.now(),
+        ticketId: currentTicket.id,
+        ticketRef: currentTicket.referenceNumber,
+        ticketStatus: currentTicket.status,
+        ticketPriority: currentTicket.priority
+      });
+    }
+    // No cleanup: we let ChatWidget reset it on route change
+  }, [currentTicket, setContext]);
+
+  if (isLoading || !currentTicket) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  const handleStatusChange = async (newStatus: TicketStatus) => {
+    if (!id) return;
+    await updateTicketStatus(id, newStatus);
+    setShowStatusMenu(false);
+  };
+
+  const handleAddComment = async (message: string) => {
+    if (!id) return;
+    await addComment(id, message);
+  };
+
+  // Determine available actions based on role and current status
+  const canUpdateStatus = user?.role === UserRole.ADMIN || user?.role === UserRole.MANAGER || user?.role === UserRole.TECHNICIAN;
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-12">
+      {/* Navigation & Actions */}
+      <div className="flex items-center justify-between">
+        <button 
+          onClick={() => navigate('/tickets')} 
+          className="flex items-center text-slate-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft className={`w-4 h-4 ${direction === 'rtl' ? 'ml-2 rotate-180' : 'mr-2'}`} /> {t('backToTickets')}
+        </button>
+        <div className="flex space-x-3 rtl:space-x-reverse">
+          <Button variant="secondary" size="sm">
+            <Share2 className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" /> {t('share')}
+          </Button>
+          
+          {canUpdateStatus && (
+            <div className="relative">
+              <Button size="sm" onClick={() => setShowStatusMenu(!showStatusMenu)}>
+                {t('updateStatus')} <ChevronDown className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
+              </Button>
+              <AnimatePresence>
+                {showStatusMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className={`absolute ${direction === 'rtl' ? 'left-0' : 'right-0'} mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-20 overflow-hidden`}
+                  >
+                     <div className="p-1">
+                        {(Object.values(TicketStatus) as string[]).map((status) => (
+                           <button
+                             key={status}
+                             onClick={() => handleStatusChange(status as TicketStatus)}
+                             className={`w-full text-left rtl:text-right px-4 py-2 text-sm rounded-lg hover:bg-slate-800 transition-colors ${currentTicket.status === status ? 'text-indigo-400 font-bold' : 'text-slate-300'}`}
+                           >
+                             {status}
+                           </button>
+                        ))}
+                     </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Header Info */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center space-x-3 rtl:space-x-reverse mb-2">
+            <h1 className="text-2xl font-bold text-white font-display">{currentTicket.title}</h1>
+            <span className="text-sm font-mono text-slate-500 px-2 py-1 bg-slate-800 rounded">{currentTicket.referenceNumber}</span>
+          </div>
+          <div className="flex items-center space-x-3 rtl:space-x-reverse">
+            <Badge variant={currentTicket.status === 'OPEN' ? 'info' : currentTicket.status === 'RESOLVED' ? 'success' : 'warning'}>
+              {currentTicket.status}
+            </Badge>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded border ${
+              currentTicket.priority === 'CRITICAL' ? 'border-red-500/50 text-red-400 bg-red-500/10' :
+              currentTicket.priority === 'HIGH' ? 'border-orange-500/50 text-orange-400 bg-orange-500/10' :
+              'border-slate-600 text-slate-400'
+            }`}>
+              {currentTicket.priority}
+            </span>
+            <span className="text-sm text-slate-400 flex items-center">
+              <Tag className="w-3 h-3 mr-1 rtl:ml-1 rtl:mr-0" /> {currentTicket.type}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content (Left Column) */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* Description */}
+          <Card>
+            <h3 className="text-lg font-bold text-white mb-4">{t('description')}</h3>
+            <div className="text-slate-300 leading-relaxed whitespace-pre-wrap">
+              {currentTicket.description}
+            </div>
+            
+            <div className="mt-6 pt-6 border-t border-slate-700 grid grid-cols-2 gap-4">
+               <div>
+                 <p className="text-xs text-slate-500 uppercase">{t('ticketSector')}</p>
+                 <p className="font-medium text-slate-200">{currentTicket.sector || 'N/A'}</p>
+               </div>
+               <div>
+                 <p className="text-xs text-slate-500 uppercase">{t('serviceCategory')}</p>
+                 <p className="font-medium text-slate-200">{currentTicket.service || 'General'}</p>
+               </div>
+            </div>
+          </Card>
+
+          {/* Attachments */}
+          <Card>
+            <h3 className="text-lg font-bold text-white mb-4">{t('attachments')}</h3>
+            <AttachmentPreview attachments={currentTicket.attachments} />
+          </Card>
+
+          {/* Comment Box */}
+          <CommentBox onSubmit={handleAddComment} />
+        </div>
+
+        {/* Sidebar (Right Column) */}
+        <div className="space-y-6">
+          
+          {/* SLA Status */}
+          <SLAIndicator 
+            deadline={currentTicket.slaDeadline} 
+            createdAt={currentTicket.createdAt}
+            status={currentTicket.status}
+          />
+
+          {/* Assignee Card */}
+          <Card>
+            <h3 className="text-sm font-bold text-slate-400 uppercase mb-4">{t('assignedTechnician')}</h3>
+            <div className="flex items-center space-x-3 rtl:space-x-reverse">
+              <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
+                <User className="w-5 h-5 text-slate-300" />
+              </div>
+              <div>
+                {currentTicket.assignedToId ? (
+                  <>
+                    <p className="text-sm font-bold text-white">Technician #{currentTicket.assignedToId}</p>
+                    <p className="text-xs text-green-400">{t('currentlyActive')}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-bold text-slate-300">{t('unassigned')}</p>
+                    <p className="text-xs text-slate-500">{t('waitingDispatch')}</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          {/* Timeline */}
+          <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+            <h3 className="text-lg font-bold text-white mb-6">{t('activityHistory')}</h3>
+            <TicketTimeline items={timeline} />
+          </div>
+
+        </div>
+      </div>
+    </motion.div>
+  );
+};

@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Filter, Calendar, Layers } from 'lucide-react';
+import { Plus, Filter, Calendar, Layers, Download } from 'lucide-react';
 import { useAnalyticsStore } from '../../store/useAnalyticsStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLanguageStore } from '../../store/useLanguageStore';
@@ -11,6 +11,7 @@ import { AnalyticsBuilder } from './AnalyticsBuilder';
 import { KPIGrid } from '../../components/analytics/Charts';
 import { api } from '../../services/mockApi';
 import { ChartConfig, UserRole } from '../../types';
+import { exportToCSV } from '../../utils/exportUtils';
 
 export const AnalyticsPage: React.FC = () => {
   const { charts, loadCharts, addChart, updateChart, removeChart, setFilters: setStoreFilters, filters: storeFilters } = useAnalyticsStore();
@@ -66,6 +67,22 @@ export const AnalyticsPage: React.FC = () => {
     if (window.confirm('Are you sure you want to delete this chart? This action cannot be undone.')) {
       removeChart(id);
     }
+  };
+
+  // Export Dashboard Stats
+  const handleExportReport = () => {
+    if (!stats) return;
+    
+    // Flatten stats for CSV
+    const csvData = [
+       { Metric: 'Total Tickets', Value: stats.totalTickets },
+       { Metric: 'Resolved This Week', Value: stats.resolvedThisWeek },
+       { Metric: 'Avg Response Time', Value: stats.avgResponseTime },
+       { Metric: 'Satisfaction Score', Value: stats.satisfaction },
+       ...stats.ticketsByType.map((t: any) => ({ Metric: `Type: ${t.name}`, Value: t.value })),
+    ];
+    
+    exportToCSV(csvData, 'dashboard_kpi_report');
   };
 
   const visibleCharts = charts.filter(chart => 
@@ -127,13 +144,17 @@ export const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Action Buttons */}
-          {canManage && (
-            <div className="flex space-x-3 rtl:space-x-reverse">
+          <div className="flex space-x-3 rtl:space-x-reverse">
+             <Button variant="secondary" onClick={handleExportReport} className="whitespace-nowrap">
+               <Download className="w-4 h-4 mr-2" /> {t('exportReport')}
+             </Button>
+
+            {canManage && (
               <Button onClick={() => handleOpenBuilder()} className="whitespace-nowrap">
                 <Plus className="w-4 h-4 mr-2" /> {t('customChart')}
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 

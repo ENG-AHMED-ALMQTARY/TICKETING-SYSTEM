@@ -108,7 +108,7 @@ export const useAnalyticsStore = create<AnalyticsState>(
       }
     }),
     'analytics_store',
-    (state) => ({
+    (state: AnalyticsState) => ({
       charts: state.charts 
     })
   )

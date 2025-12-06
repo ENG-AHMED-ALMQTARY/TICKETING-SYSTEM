@@ -1,7 +1,8 @@
 
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send, Loader2, FileText } from 'lucide-react';
+import { MessageSquare, X, Send, Loader2, FileText, Eye } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { useChatbotStore } from '../../store/useChatbotStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLanguageStore } from '../../store/useLanguageStore';
@@ -11,10 +12,12 @@ import { ImageUploader } from './ImageUploader';
 export const ChatWidget: React.FC = () => {
   const { 
     isOpen, toggleOpen, messages, sendMessage, 
-    addMessage, isThinking, initGuestWelcome, updateGuestDraft, guestStep 
+    addMessage, isThinking, initGuestWelcome, updateGuestDraft, guestStep,
+    context, setContext
   } = useChatbotStore();
   const { isAuthenticated } = useAuthStore();
   const { t, direction } = useLanguageStore();
+  const location = useLocation();
   
   const [inputText, setInputText] = React.useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -27,6 +30,30 @@ export const ChatWidget: React.FC = () => {
       initializedRef.current = true;
     }
   }, [isAuthenticated, initGuestWelcome]);
+
+  // Track Page Context
+  useEffect(() => {
+    // Basic route mapping to page names
+    let pageName = 'Unknown Page';
+    if (location.pathname === '/' || location.pathname === '') pageName = 'Landing Page';
+    else if (location.pathname === '/login') pageName = 'Login';
+    else if (location.pathname === '/dashboard') pageName = 'Dashboard';
+    else if (location.pathname === '/tickets') pageName = 'Ticket List';
+    else if (location.pathname === '/tickets/create') pageName = 'Create Ticket';
+    else if (location.pathname.startsWith('/tickets/')) pageName = 'Ticket Detail';
+    else if (location.pathname === '/analytics') pageName = 'Analytics';
+    else if (location.pathname === '/admin') pageName = 'Admin User List';
+    else if (location.pathname === '/notifications') pageName = 'Notifications';
+
+    // Set basic context. TicketDetail component will upgrade this with specific data if needed.
+    // We only set it here if we are NOT on a detail page, or we set a placeholder.
+    // To allow TicketDetail to override, we set the base context.
+    setContext({
+      page: pageName,
+      route: location.pathname,
+      timestamp: Date.now()
+    });
+  }, [location.pathname, setContext]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -114,9 +141,16 @@ export const ChatWidget: React.FC = () => {
                   <h3 className="font-bold text-white text-sm">
                     {isAuthenticated ? t('supportAssistant') : t('guestSupport')}
                   </h3>
-                  <div className="flex items-center space-x-1 rtl:space-x-reverse">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <span className="text-xs text-slate-400">{t('online')}</span>
+                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                     <div className="flex items-center space-x-1 rtl:space-x-reverse">
+                       <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                       <span className="text-xs text-slate-400">{t('online')}</span>
+                     </div>
+                     {context?.ticketRef && (
+                       <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-500/30 flex items-center">
+                         <Eye className="w-3 h-3 mr-1" /> {context.ticketRef}
+                       </span>
+                     )}
                   </div>
                 </div>
               </div>

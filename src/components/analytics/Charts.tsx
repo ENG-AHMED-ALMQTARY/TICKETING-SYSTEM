@@ -39,26 +39,28 @@ export const KPIGrid: React.FC<{ stats: any }> = ({ stats }) => {
 export const TrendChart: React.FC<{ data: any[] }> = ({ data }) => {
   const { t } = useLanguageStore();
   return (
-    <Card className="h-96">
-      <h3 className="text-lg font-bold text-white mb-6">{t('weeklyTrend')}</h3>
-      <ResponsiveContainer width="100%" height="85%">
-        <AreaChart data={data}>
-          <defs>
-            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-          <XAxis dataKey="name" stroke="#64748b" axisLine={false} tickLine={false} />
-          <YAxis stroke="#64748b" axisLine={false} tickLine={false} />
-          <Tooltip 
-            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-            itemStyle={{ color: '#e2e8f0' }}
-          />
-          <Area type="monotone" dataKey="value" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
-        </AreaChart>
-      </ResponsiveContainer>
+    <Card className="h-96 flex flex-col">
+      <h3 className="text-lg font-bold text-white mb-6 shrink-0">{t('weeklyTrend')}</h3>
+      <div className="flex-1 min-h-0 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+            <XAxis dataKey="name" stroke="#64748b" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+            <YAxis stroke="#64748b" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+            <Tooltip 
+              contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+              itemStyle={{ color: '#e2e8f0' }}
+            />
+            <Area type="monotone" dataKey="value" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
     </Card>
   );
 };
@@ -66,50 +68,54 @@ export const TrendChart: React.FC<{ data: any[] }> = ({ data }) => {
 export const DistributionChart: React.FC<{ data: any[] }> = ({ data }) => {
   const { t } = useLanguageStore();
   return (
-    <Card className="h-96">
-      <h3 className="text-lg font-bold text-white mb-6">{t('ticketsByType')}</h3>
-      <ResponsiveContainer width="100%" height="85%">
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={60}
-            outerRadius={100}
-            fill="#8884d8"
-            paddingAngle={5}
-            dataKey="value"
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip 
-             contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
-          />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
+    <Card className="h-96 flex flex-col">
+      <h3 className="text-lg font-bold text-white mb-6 shrink-0">{t('ticketsByType')}</h3>
+      <div className="flex-1 min-h-0 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={80}
+              fill="#8884d8"
+              paddingAngle={5}
+              dataKey="value"
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip 
+               contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
+            />
+            <Legend verticalAlign="bottom" height={36} />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
     </Card>
   );
 };
 
 export const BarChartComponent: React.FC<{ data: any[], title: string }> = ({ data, title }) => {
   return (
-    <Card className="h-96">
-      <h3 className="text-lg font-bold text-white mb-6">{title}</h3>
-      <ResponsiveContainer width="100%" height="85%">
-        <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-          <XAxis dataKey="name" stroke="#64748b" axisLine={false} tickLine={false} />
-          <YAxis stroke="#64748b" axisLine={false} tickLine={false} />
-          <Tooltip 
-            cursor={{ fill: '#334155', opacity: 0.4 }}
-            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
-          />
-          <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
+    <Card className="h-96 flex flex-col">
+      <h3 className="text-lg font-bold text-white mb-6 shrink-0">{title}</h3>
+      <div className="flex-1 min-h-0 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+            <XAxis dataKey="name" stroke="#64748b" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+            <YAxis stroke="#64748b" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+            <Tooltip 
+              cursor={{ fill: '#334155', opacity: 0.4 }}
+              contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
+            />
+            <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </Card>
   );
 };

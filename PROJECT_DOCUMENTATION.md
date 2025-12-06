@@ -1,8 +1,8 @@
 
 # Smart Product Ticketing & Market Oversight System - Documentation
 
-**Version:** 1.0.0
-**Tech Stack:** React 19, TypeScript, Zustand, Tailwind CSS, Framer Motion, Recharts, Gemini AI.
+**Version:** 1.1.0
+**Tech Stack:** React 19, TypeScript, Zustand, Tailwind CSS, Framer Motion, Recharts, Gemini AI, jsPDF, html2canvas.
 
 ---
 
@@ -10,7 +10,7 @@
 
 The **Smart Product Ticketing & Market Oversight System** is an enterprise-grade web application designed to monitor market irregularities (price manipulation, product shortages, damaged goods) and facilitate issue resolution between consumers, retailers, and technicians.
 
-It features a role-based architecture, a persistent AI assistant that bridges unauthenticated and authenticated sessions, and a fully dynamic analytics engine.
+It features a role-based architecture, a persistent AI assistant that bridges unauthenticated and authenticated sessions, and a fully dynamic analytics engine with export capabilities.
 
 ---
 
@@ -22,103 +22,81 @@ It features a role-based architecture, a persistent AI assistant that bridges un
 *   **Vite:** (Implied) Used as the build tool for fast HMR.
 
 ### 2.2 State Management (Zustand)
-The application uses **Zustand** for global state management. A custom higher-order function `withLocalStoragePersist` is implemented to automatically persist specific stores to the browser's `localStorage`. This ensures that user sessions, drafted tickets, and chart configurations survive page reloads.
+The application uses **Zustand** for global state management with a custom `withLocalStoragePersist` middleware.
 
 **Active Stores:**
 1.  `useAuthStore`: Manages user session, login status, and role.
-2.  `useTicketStore`: Manages ticket CRUD operations, timeline history, and current selection.
-3.  `useChatbotStore`: Manages chat history, AI interaction state, and Guest Flow drafts.
+2.  `useTicketStore`: Manages ticket CRUD, **Advanced Filtering**, pagination, and timeline.
+3.  `useChatbotStore`: Manages chat history, **Context**, and Guest Flow.
 4.  `useNotificationStore`: Manages alerts and read/unread counts.
 5.  `useAnalyticsStore`: Manages custom chart configurations and dashboard filters.
+6.  `useLanguageStore`: Manages active language (`en`/`ar`) and direction (`ltr`/`rtl`).
 
 ### 2.3 Styling & UI
 *   **Tailwind CSS:** Utility-first styling.
-*   **Design Tokens:** Defined in `index.html` (Colors: Slate/Indigo/Purple, Fonts: Inter/DM Sans).
-*   **Glassmorphism:** The UI relies heavily on semi-transparent backgrounds (`bg-slate-900/50`, `backdrop-blur-xl`) to create a modern, high-tech aesthetic.
-*   **Animation:** **Framer Motion** is used for page transitions, modal popups, and list reordering.
+*   **Design Tokens:** Defined in `index.html`.
+*   **Glassmorphism:** Extensive use of semi-transparent backgrounds.
+*   **Animation:** **Framer Motion** for transitions.
+*   **RTL Support:** The entire UI flips dynamically based on the selected language.
 
 ### 2.4 AI Integration
-*   **Google Gemini 2.5 Flash:** The chatbot communicates with the Gemini API for natural language processing.
-*   **Service Layer:** `services/chatbotApi.ts` handles the API handshake. It includes fallback logic to mock responses if no API key is present in the environment.
+*   **Google Gemini 2.5 Flash:** The chatbot communicates with the Gemini API via `services/chatbotApi.ts`.
+*   **Context Injection:** The app feeds the current page context (e.g., "Viewing Ticket #123") into the system prompt, allowing the AI to answer context-specific questions.
 
 ---
 
 ## 3. Key Features & Modules
 
 ### 3.1 The AI Assistant (Chatbot)
-Located in `components/chatbot/ChatWidget.tsx`, this is a persistent global widget.
+Located in `components/chatbot/ChatWidget.tsx`.
 
-*   **Dual Mode Operation:**
-    *   **Guest Mode:** For unauthenticated users, the bot enters a scripted "State Machine" flow (`NAME` -> `PHONE` -> `SECTOR` -> `DESCRIPTION`). It collects data to draft a ticket.
-    *   **Authenticated Mode:** Once logged in, the bot acts as a general assistant powered by Gemini, capable of answering context-aware questions.
-*   **Guest Ticket Claiming:** If a guest drafts a ticket and then logs in, `App.tsx` detects the `guest_ticket` in localStorage and triggers the `GuestClaimModal`. This allows the user to convert their anonymous chat into a real system ticket.
-*   **Multi-Modal Input:**
-    *   **Voice:** Uses the Web Speech API (`VoiceRecorder.tsx`) to transcribe speech to text.
-    *   **Image:** Allows file selection (`ImageUploader.tsx`), rendering previews in the chat bubble.
+*   **Dual Mode Operation:** Guest (Scripted Draft) vs. Authenticated (Gemini AI).
+*   **Context Awareness:** The bot is aware of the current route and specific data (Ticket ID, Status) being viewed.
+*   **Multi-Modal Input:** Voice (Web Speech API) and Image Upload.
 
-### 3.2 Dynamic Analytics Engine
-Located in `pages/analytics/` and `store/useAnalyticsStore.ts`.
+### 3.2 Dynamic Analytics Engine & Reporting
+Located in `pages/analytics/` and `src/utils/exportUtils.ts`.
 
-*   **Analytics Page:** Displays a grid of customizable charts. Includes global filters for Sector and Date Range that cascade down to all charts.
-*   **Chart Builder:** A WYSIWYG editor (`AnalyticsBuilder.tsx`) allowing Managers/Admins to create custom visualizations.
-    *   **Create Mode:** Opens with default values.
-    *   **Edit Mode:** Preloads existing chart configuration.
-*   **Configuration:** Users can select:
-    *   **Type:** Area, Bar, Line, Pie, Radar.
-    *   **Metric:** Ticket counts, Satisfaction, Response time.
-    *   **Grouping:** By Date, Sector, Status, Priority, Technician.
-    *   **Visibility:** Role-based access control (e.g., restrict a chart to Admins only).
-*   **Live Preview:** The builder fetches mock data in real-time (`ChartPreview.tsx`) to show how the chart will look before saving.
-*   **Persistence:** Created charts are saved to localStorage, allowing users to build a personalized dashboard that persists across sessions.
+*   **Chart Builder:** WYSIWYG editor for creating custom visualizations (Area, Bar, Line, Pie, Radar).
+*   **Export Capabilities:**
+    *   **CSV:** Exports raw dataset of any chart.
+    *   **PDF:** Generates a professional report containing a high-res image of the chart (via `html2canvas`) and a data summary table (via `jspdf`).
+*   **Live Preview:** Real-time data fetching during chart configuration.
 
-### 3.3 Ticketing System
-Located in `pages/tickets/`.
+### 3.3 Ticketing System & Advanced Filtering
+Located in `pages/tickets/` and `services/ticketsApi.ts`.
 
-*   **SLA Tracking:** The `SLAIndicator` component visually displays time remaining vs. the deadline. It changes color (Green -> Orange -> Red) as the deadline approaches.
-*   **Timeline:** A unified history view (`TicketTimeline.tsx`) combining:
-    *   Status Changes.
-    *   User Comments.
-    *   File Uploads.
-    *   Assignee Changes.
-*   **Optimistic Updates:** The UI updates immediately while the `ticketsApi` simulates network delay.
+*   **Server-Side Simulation:** The `getTickets` API method simulates complex backend queries:
+    *   **Full Text Search:** Filters by title, description, or reference ID.
+    *   **Multi-Select Filters:** Supports multiple Statuses and Priorities simultaneously.
+    *   **Date Range:** Filters by creation date.
+    *   **Pagination:** Handles page size and current page offsets.
+*   **SLA Tracking:** Visual indicators for deadline proximity.
+*   **Timeline:** Unified history view of all ticket activities.
+
+### 3.4 Internationalization (i18n)
+Located in `src/i18n/` and `src/store/useLanguageStore.ts`.
+
+*   **Dictionary System:** Simple JSON-based translation maps (`en.ts`, `ar.ts`).
+*   **Direction Control:** Toggling language automatically updates the `dir` attribute on the `<html>` tag, triggering Tailwind's `rtl:` modifiers.
 
 ---
 
 ## 4. Page Reference
 
 ### 4.1 Public Pages
-*   **Landing Page (`/`):**
-    *   Features a hero section with animated background gradients.
-    *   Displays live system metrics (Active Tickets, Resolution Rate).
-    *   Includes a "Start Guest Chat" CTA.
-*   **Authentication (`/login`):**
-    *   A simulated login form.
-    *   Lists available test accounts for easy demo access.
+*   **Landing Page (`/`):** Hero section, Live Metrics, Language Toggle.
+*   **Authentication (`/login`):** Login form with test accounts.
 
 ### 4.2 Protected Pages (Dashboard Layout)
-*   **Dashboard (`/dashboard`):**
-    *   **KPI Grid:** High-level metrics (Total Tickets, Avg Response).
-    *   **Default Charts:** Trend Analysis and Ticket Distribution.
-    *   **Role-Specific Content:** Shows specific alerts for Technicians (e.g., "Active Assignment").
+*   **Dashboard (`/dashboard`):** KPI Grid, Default Charts.
 *   **Ticket List (`/tickets`):**
-    *   Search bar (filters by Title/Reference).
-    *   Grid view of `TicketCard` components.
-*   **Ticket Create (`/tickets/create`):**
-    *   Form validation for Title, Priority, Type, and Description.
-*   **Ticket Detail (`/tickets/:id`):**
-    *   **Header:** Status badges, Priority indicators.
-    *   **Actions:** Update Status (Role-protected), Share.
-    *   **Tabs/Grid:** Description, Attachments, SLA Timer, Assignee info, and Activity Timeline.
-*   **Analytics (`/analytics`):**
-    *   Renders the grid of configured charts.
-    *   "Custom Chart" button opens the Builder Modal.
-*   **Notifications (`/notifications`):**
-    *   Tabs for "All" vs "Unread".
-    *   Clicking a notification marks it as read and navigates to the relevant resource.
-*   **Admin User Management (`/admin`):**
-    *   **Table View:** Lists users with avatars, roles, and contact info.
-    *   **CRUD Actions:** Modals for Creating, Editing, and Deleting users.
-    *   **Search:** filter users by name/email/role.
+    *   **Filter Bar:** Collapsible panel for advanced filtering criteria.
+    *   **Active Filters:** Chip display for quick removal of active filters.
+    *   **Pagination:** Next/Prev controls.
+*   **Ticket Detail (`/tickets/:id`):** SLA Timer, Assignee, Attachments, Timeline.
+*   **Analytics (`/analytics`):** Grid of charts with Export options.
+*   **Admin User Management (`/admin`):** CRUD operations for users.
 
 ---
 
@@ -129,34 +107,18 @@ Located in `pages/tickets/`.
 interface User {
   id: string;
   name: string;
-  email: string;
-  role: 'GUEST' | 'CONSUMER' | 'RETAILER' | 'TECHNICIAN' | 'MANAGER' | 'ADMIN';
+  role: UserRole;
   // ...
 }
 ```
 
-### 5.2 Ticket
+### 5.2 Ticket & Filtering
 ```typescript
-interface Ticket {
-  id: string;
-  referenceNumber: string; // e.g., REF-2023-001
-  status: 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  slaDeadline: string; // ISO Date
-  // ...
-}
-```
-
-### 5.3 ChartConfig
-```typescript
-interface ChartConfig {
-  id: string;
-  title: string;
-  type: 'AREA' | 'BAR' | 'PIE' | 'LINE' | 'RADAR';
-  metric: string;
-  groupBy: string; // 'date' | 'sector' | 'status'
-  visibility: UserRole[]; // Who can see this chart
-  filters?: Record<string, any>;
+interface TicketFilterParams {
+  q?: string;
+  status?: TicketStatus[];
+  priority?: string[];
+  dateFrom?: string;
   // ...
 }
 ```
@@ -165,26 +127,23 @@ interface ChartConfig {
 
 ## 6. Mock Data Strategy
 
-The application uses a simulated backend in `services/mockApi.ts`.
-*   **Latency:** All API calls have a configurable delay (default 600ms) to simulate real-world network conditions and demonstrate loading states.
-*   **Data Generation:** The analytics API generates realistic-looking random data based on the requested `ChartConfig` (e.g., if grouping by 'sector', it returns categorical data; if by 'date', it returns time-series data).
+The application uses a simulated backend in `services/mockApi.ts` and `services/ticketsApi.ts`.
+*   **Latency:** Configurable delay (default 400-600ms).
+*   **Dynamic Generation:** `ticketsApi` generates 50+ mock tickets to demonstrate pagination and filtering effectiveness.
 
 ---
 
 ## 7. Security & Permissions
 
-*   **Route Protection:** `App.tsx` wraps protected routes in a `<ProtectedRoute>` component that checks `useAuthStore.isAuthenticated`.
-*   **Component Visibility:**
-    *   The **Sidebar** filters navigation links based on the user's role.
-    *   **Analytics Builder** is only accessible to Admin/Manager.
-    *   **Status Updates** on tickets are hidden from Consumers.
+*   **Route Protection:** `ProtectedRoute` wrapper.
+*   **Component Visibility:** UI elements (like "Delete User" or "Create Chart") are conditionally rendered based on `UserRole`.
 
 ---
 
 ## 8. Setup & Usage
 
-1.  **Login:** Use any of the test accounts (e.g., `admin@test.com`, `manager@test.com`).
-2.  **Create Data:** Go to Tickets -> Create to add data to the store.
-3.  **Analyze:** Go to Analytics -> Custom Chart to build visualizations based on the data.
-4.  **Admin:** Go to Admin to manage the user base.
-5.  **Reset:** To clear all data and persisted state, click the "Reset" (Rotate Icon) button in the Header.
+1.  **Login:** Use `admin@test.com`.
+2.  **Explore Tickets:** Use the filter bar in "Tickets" to search for specific issues.
+3.  **Analytics:** Create a custom chart, then click the "Export" menu on the card to download a PDF report.
+4.  **Chat:** Ask the bot "What is the status of this ticket?" while viewing a ticket detail page.
+5.  **Language:** Toggle the globe icon in the header to switch between English and Arabic.

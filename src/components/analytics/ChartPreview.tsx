@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, RadarChart, Radar,
@@ -156,8 +157,12 @@ export const ChartPreview: React.FC<ChartPreviewProps> = ({ config, globalFilter
   };
 
   return (
-    <ResponsiveContainer width="100%" height={height as any}>
-      {renderChart()}
-    </ResponsiveContainer>
+    <div className="w-full h-full min-h-[250px] flex flex-col">
+       <div className="flex-1 min-h-0">
+          <ResponsiveContainer width="100%" height="100%">
+            {renderChart()}
+          </ResponsiveContainer>
+       </div>
+    </div>
   );
 };

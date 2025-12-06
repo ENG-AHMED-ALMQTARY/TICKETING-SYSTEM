@@ -26,7 +26,7 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <div className="flex justify-between items-center mb-8 bg-slate-800/50 backdrop-blur-sm p-4 rounded-xl border border-slate-700">
+    <div className="flex justify-between items-center mb-8 bg-slate-800/90 backdrop-blur-md p-4 rounded-xl border border-slate-700 shadow-lg relative z-30">
        <div className="flex-1">
           {/* Breadcrumbs or Title could go here */}
        </div>
@@ -35,16 +35,19 @@ export const Header: React.FC = () => {
           {/* Language Toggle */}
           <button
             onClick={toggleLanguage}
-            className="flex items-center space-x-1 rtl:space-x-reverse px-3 py-1.5 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-300 hover:text-white hover:border-indigo-500 transition-colors"
+            className="flex items-center space-x-2 rtl:space-x-reverse px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-sm transition-all shadow-md"
+            title="Switch Language"
           >
             <Globe className="w-4 h-4" />
-            <span className="font-mono font-bold pt-0.5">{language.toUpperCase()}</span>
+            <span>{language === 'en' ? 'العربية' : 'English'}</span>
           </button>
+
+          <div className="h-6 w-px bg-slate-600 mx-2" />
 
           {/* Dev/Admin Reset Tool */}
           <button
             onClick={handleResetState}
-            className="p-2 text-slate-500 hover:text-red-400 transition-colors"
+            className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors"
             title={t('resetState')}
           >
             <RotateCcw className="w-5 h-5" />
@@ -54,7 +57,7 @@ export const Header: React.FC = () => {
           <div className="relative">
             <button 
               onClick={() => setShowNotifs(!showNotifs)}
-              className="relative p-2 text-slate-400 hover:text-white transition-colors"
+              className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
             >
               <Bell className="w-6 h-6" />
               {unreadCount > 0 && (
@@ -77,7 +80,7 @@ export const Header: React.FC = () => {
                   </div>
                   <div className="max-h-64 overflow-y-auto">
                     {notifications.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-slate-500">No new notifications</div>
+                      <div className="p-4 text-center text-xs text-slate-500">{t('noNotifications')}</div>
                     ) : (
                       notifications.slice(0, 5).map(n => (
                         <div 

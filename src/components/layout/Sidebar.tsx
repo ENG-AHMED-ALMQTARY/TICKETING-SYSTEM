@@ -6,7 +6,8 @@ import {
   Ticket, 
   BarChart2, 
   Users, 
-  LogOut
+  LogOut,
+  Globe
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLanguageStore } from '../../store/useLanguageStore';
@@ -14,7 +15,7 @@ import { UserRole } from '../../types';
 
 export const Sidebar: React.FC = () => {
   const { user, logout } = useAuthStore();
-  const { t, direction } = useLanguageStore();
+  const { t, direction, language, setLanguage } = useLanguageStore();
   const location = useLocation();
 
   const links = [
@@ -24,8 +25,12 @@ export const Sidebar: React.FC = () => {
     { to: '/admin', icon: Users, label: 'admin', roles: [UserRole.ADMIN] },
   ];
 
+  const toggleLanguage = () => {
+    setLanguage(language === 'en' ? 'ar' : 'en');
+  };
+
   return (
-    <div className={`h-screen w-64 bg-slate-900 border-r border-slate-800 flex flex-col fixed top-0 z-40 ${direction === 'rtl' ? 'right-0 border-r-0 border-l' : 'left-0'}`}>
+    <div className="h-screen w-64 bg-slate-900 border-r border-slate-800 flex flex-col fixed top-0 z-40">
       <div className="p-6">
         <div className="flex items-center space-x-2 rtl:space-x-reverse">
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
@@ -64,7 +69,15 @@ export const Sidebar: React.FC = () => {
         })}
       </nav>
 
-      <div className="p-4 border-t border-slate-800">
+      <div className="p-4 border-t border-slate-800 space-y-2">
+        <button 
+          onClick={toggleLanguage}
+          className="flex items-center space-x-3 rtl:space-x-reverse w-full px-4 py-3 bg-slate-800 text-slate-300 hover:bg-indigo-600 hover:text-white rounded-xl transition-all"
+        >
+          <Globe className="w-5 h-5" />
+          <span className="font-bold text-sm">{language === 'en' ? 'العربية' : 'English'}</span>
+        </button>
+
         <button 
           onClick={logout}
           className="flex items-center space-x-3 rtl:space-x-reverse w-full px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"

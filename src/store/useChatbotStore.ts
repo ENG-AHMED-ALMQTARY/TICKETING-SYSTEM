@@ -1,7 +1,18 @@
+
 import { create } from 'zustand';
 import { ChatMessage } from '../types';
 import { sendToGemini } from '../services/chatbotApi';
 import { withLocalStoragePersist } from './persist';
+
+export interface ChatContext {
+  page: string;
+  route: string;
+  timestamp: number;
+  ticketId?: string;
+  ticketRef?: string;
+  ticketStatus?: string;
+  ticketPriority?: string;
+}
 
 interface GuestTicketDraft {
   name?: string;
@@ -17,6 +28,7 @@ interface ChatbotState {
   isOpen: boolean;
   messages: ChatMessage[];
   isThinking: boolean;
+  context?: ChatContext;
   
   // Guest Flow State
   guestDraft: GuestTicketDraft;
@@ -24,6 +36,7 @@ interface ChatbotState {
 
   toggleOpen: () => void;
   setOpen: (isOpen: boolean) => void;
+  setContext: (context?: ChatContext) => void;
   addMessage: (message: ChatMessage) => void;
   sendMessage: (text: string) => Promise<void>;
   
@@ -47,11 +60,13 @@ export const useChatbotStore = create<ChatbotState>(
         }
       ],
       isThinking: false,
+      context: undefined,
       guestDraft: {},
       guestStep: 'NONE',
 
       toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
       setOpen: (isOpen) => set({ isOpen }),
+      setContext: (context) => set({ context }),
       addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
       
       updateGuestDraft: (updates) => set((state) => ({ guestDraft: { ...state.guestDraft, ...updates } })),
@@ -83,7 +98,7 @@ export const useChatbotStore = create<ChatbotState>(
       },
 
       sendMessage: async (text: string) => {
-        const { addMessage, guestStep, guestDraft, resetGuestFlow, startGuestFlow, messages } = get();
+        const { addMessage, guestStep, guestDraft, resetGuestFlow, startGuestFlow, messages, context } = get();
         
         // User message
         const userMessage: ChatMessage = {
@@ -162,7 +177,7 @@ export const useChatbotStore = create<ChatbotState>(
         try {
           // Use the updated messages list which includes the new user message
           const history = [...messages, userMessage];
-          const botResponse = await sendToGemini(history);
+          const botResponse = await sendToGemini(history, context);
           
           set({ isThinking: false });
           addMessage(botResponse);
@@ -179,7 +194,7 @@ export const useChatbotStore = create<ChatbotState>(
       },
     }),
     'chatbot_store',
-    (state: ChatbotState) => ({
+    (state) => ({
       messages: state.messages,
       guestDraft: state.guestDraft,
       guestStep: state.guestStep
