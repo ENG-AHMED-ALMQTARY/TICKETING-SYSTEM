@@ -1,16 +1,22 @@
-import React, { useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Sidebar } from './components/layout/Sidebar';
+import { Header } from './components/layout/Header';
 import { ChatWidget } from './components/chatbot/ChatWidget';
 import { Dashboard } from './pages/Dashboard';
 import { AuthPage } from './pages/AuthPage';
+import { TicketList } from './pages/tickets/TicketList';
+import { TicketCreate } from './pages/tickets/TicketCreate';
+import { AnalyticsPage } from './pages/analytics/AnalyticsPage';
+import { UserList } from './pages/admin/UserList';
 import { useAuthStore } from './store/useAuthStore';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="flex min-h-screen bg-[#0f172a] text-slate-100 font-sans">
       <Sidebar />
-      <div className="flex-1 ml-64 p-8 overflow-y-auto">
+      <div className="flex-1 ml-64 p-8 overflow-y-auto relative">
+        <Header />
         {children}
       </div>
       <ChatWidget />
@@ -36,16 +42,39 @@ const App: React.FC = () => {
           </ProtectedRoute>
         } />
         
-        {/* Placeholder for other routes */}
+        {/* Ticket Routes */}
         <Route path="/tickets" element={
           <ProtectedRoute>
-            <div className="p-8"><h1 className="text-2xl font-bold">Ticket Management</h1><p className="text-slate-400">Coming soon in full implementation.</p></div>
+            <TicketList />
+          </ProtectedRoute>
+        } />
+        <Route path="/tickets/create" element={
+          <ProtectedRoute>
+            <TicketCreate />
+          </ProtectedRoute>
+        } />
+        <Route path="/tickets/:id" element={
+          <ProtectedRoute>
+            <div className="text-slate-400">Ticket Details (Implementation Pending)</div>
           </ProtectedRoute>
         } />
         
+        {/* Analytics Routes */}
          <Route path="/analytics" element={
           <ProtectedRoute>
-            <div className="p-8"><h1 className="text-2xl font-bold">Analytics Builder</h1><p className="text-slate-400">Coming soon in full implementation.</p></div>
+            <AnalyticsPage />
+          </ProtectedRoute>
+        } />
+
+        {/* Admin Routes */}
+        <Route path="/admin" element={
+          <ProtectedRoute>
+             <UserList />
+          </ProtectedRoute>
+        } />
+        <Route path="/notifications" element={
+          <ProtectedRoute>
+            <div className="text-slate-400">Notifications Page (Implementation Pending)</div>
           </ProtectedRoute>
         } />
 

@@ -33,6 +33,8 @@ export interface User {
   role: UserRole;
   avatar?: string;
   organization?: string;
+  phone?: string;
+  sector?: string;
 }
 
 export interface Ticket {
@@ -50,6 +52,27 @@ export interface Ticket {
   slaDeadline: string; // ISO Date string
   attachments: string[]; // URLs
   location?: string;
+  sector?: string;
+  service?: string;
+}
+
+export interface TimelineItem {
+  id: string;
+  type: 'STATUS_CHANGE' | 'COMMENT' | 'ASSIGNMENT' | 'FILE_UPLOAD';
+  content: string;
+  userId: string;
+  timestamp: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'INFO' | 'WARNING' | 'SUCCESS' | 'ERROR';
+  read: boolean;
+  createdAt: string;
+  link?: string;
 }
 
 export interface ChatMessage {
@@ -59,6 +82,7 @@ export interface ChatMessage {
   timestamp: number;
   attachments?: string[];
   isThinking?: boolean;
+  actionRequired?: boolean;
 }
 
 export interface AnalyticsMetric {

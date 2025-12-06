@@ -87,3 +87,23 @@ export const DistributionChart: React.FC<{ data: any[] }> = ({ data }) => {
     </Card>
   );
 };
+
+export const BarChartComponent: React.FC<{ data: any[], title: string }> = ({ data, title }) => {
+  return (
+    <Card className="h-96">
+      <h3 className="text-lg font-bold text-white mb-6">{title}</h3>
+      <ResponsiveContainer width="100%" height="85%">
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+          <XAxis dataKey="name" stroke="#64748b" axisLine={false} tickLine={false} />
+          <YAxis stroke="#64748b" axisLine={false} tickLine={false} />
+          <Tooltip 
+            cursor={{ fill: '#334155', opacity: 0.4 }}
+            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
+          />
+          <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </Card>
+  );
+};

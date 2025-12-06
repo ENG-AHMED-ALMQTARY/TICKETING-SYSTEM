@@ -1,7 +1,9 @@
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Mic, Send, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { MessageSquare, X, Send, Loader2 } from 'lucide-react';
 import { useChatbotStore } from '../../store/useChatbotStore';
+import { VoiceRecorder } from './VoiceRecorder';
+import { ImageUploader } from './ImageUploader';
 
 export const ChatWidget: React.FC = () => {
   const { isOpen, toggleOpen, messages, sendMessage, isThinking } = useChatbotStore();
@@ -21,6 +23,14 @@ export const ChatWidget: React.FC = () => {
     if (!inputText.trim()) return;
     await sendMessage(inputText);
     setInputText('');
+  };
+
+  const handleVoiceInput = (text: string) => {
+    setInputText(text);
+  };
+
+  const handleImageUpload = (file: File) => {
+    sendMessage(`[Image Uploaded: ${file.name}]`);
   };
 
   return (
@@ -85,9 +95,7 @@ export const ChatWidget: React.FC = () => {
             {/* Input */}
             <form onSubmit={handleSubmit} className="p-4 bg-slate-800 border-t border-slate-700">
               <div className="flex items-center space-x-2">
-                <button type="button" className="p-2 text-slate-400 hover:text-indigo-400 rounded-lg hover:bg-slate-700 transition-colors">
-                  <ImageIcon className="w-5 h-5" />
-                </button>
+                <ImageUploader onImageSelected={handleImageUpload} />
                 <div className="relative flex-1">
                   <input
                     type="text"
@@ -96,12 +104,9 @@ export const ChatWidget: React.FC = () => {
                     placeholder="Type a message..."
                     className="w-full bg-slate-900 border border-slate-700 rounded-full px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
                   />
-                  <button 
-                    type="button" 
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-400"
-                  >
-                    <Mic className="w-4 h-4" />
-                  </button>
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <VoiceRecorder onRecordingComplete={handleVoiceInput} />
+                  </div>
                 </div>
                 <button 
                   type="submit" 

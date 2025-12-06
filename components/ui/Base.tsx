@@ -2,10 +2,11 @@ import React from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
 
 // --- Button ---
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
+  children?: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({ 
@@ -45,8 +46,9 @@ export const Button: React.FC<ButtonProps> = ({
 };
 
 // --- Card ---
-interface CardProps extends HTMLMotionProps<"div"> {
+interface CardProps extends Omit<HTMLMotionProps<"div">, "children"> {
   glass?: boolean;
+  children?: React.ReactNode;
 }
 
 export const Card: React.FC<CardProps> = ({ children, glass, className = '', ...props }) => {
