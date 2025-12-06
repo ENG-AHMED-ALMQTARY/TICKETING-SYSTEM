@@ -7,7 +7,9 @@ import { Dashboard } from './pages/Dashboard';
 import { AuthPage } from './pages/AuthPage';
 import { TicketList } from './pages/tickets/TicketList';
 import { TicketCreate } from './pages/tickets/TicketCreate';
+import { TicketDetail } from './pages/tickets/TicketDetail';
 import { AnalyticsPage } from './pages/analytics/AnalyticsPage';
+import { NotificationsPage } from './pages/notifications/NotificationsPage';
 import { UserList } from './pages/admin/UserList';
 import { useAuthStore } from './store/useAuthStore';
 
@@ -55,7 +57,7 @@ const App: React.FC = () => {
         } />
         <Route path="/tickets/:id" element={
           <ProtectedRoute>
-            <div className="text-slate-400">Ticket Details (Implementation Pending)</div>
+            <TicketDetail />
           </ProtectedRoute>
         } />
         
@@ -72,9 +74,10 @@ const App: React.FC = () => {
              <UserList />
           </ProtectedRoute>
         } />
+        
         <Route path="/notifications" element={
           <ProtectedRoute>
-            <div className="text-slate-400">Notifications Page (Implementation Pending)</div>
+            <NotificationsPage />
           </ProtectedRoute>
         } />
 

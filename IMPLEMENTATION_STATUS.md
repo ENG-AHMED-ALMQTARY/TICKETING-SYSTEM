@@ -1,129 +1,120 @@
-# System Implementation Status & Audit
+# System Implementation Audit & Status Report
 
+**Version:** 0.3.3
 **Date:** Current
-**Version:** 0.3.0 (Feature Expansion Phase)
-**Architecture:** React 19 + TypeScript + Zustand + Tailwind CSS
+**Architecture:** React 19 + TypeScript + Zustand + Tailwind CSS + Framer Motion + Recharts
 
 ---
 
-## 1. File-by-File Implementation Audit
+## 1. Component & File Audit
 
-### **Core & Configuration**
-| File | Status | Description |
+### **Core Infrastructure**
+| File | Status | Implementation Details |
 | :--- | :--- | :--- |
-| `index.html` | ✅ Complete | Includes Tailwind CDN, Google Fonts (Inter/DM Sans), Import Maps. |
-| `index.tsx` | ✅ Complete | React Root entry point with StrictMode. |
-| `types.ts` | ✅ Complete | Global definitions including `Ticket`, `Notification`, `TimelineItem`, and Enums. |
-| `metadata.json` | ✅ Complete | Permissions config. |
+| `index.tsx` | ✅ **Done** | StrictMode enabled. Root mounting. |
+| `types.ts` | ✅ **Done** | Comprehensive types for `User`, `Ticket`, `Notification`, `TimelineItem`, `ChatMessage`. |
+| `metadata.json` | ✅ **Done** | Permission requests for Camera/Microphone defined. |
+| `App.tsx` | ✅ **Done** | Router setup complete. Routes for Dashboard, Auth, Tickets (List/Create/Detail), Analytics, Admin, Notifications established. |
 
 ### **State Management (Zustand)**
-| File | Status | Description |
-| :--- | :--- | :--- |
-| `store/useAuthStore.ts` | ✅ Complete | Auth session management (mock). |
-| `store/useChatbotStore.ts` | ✅ Complete | Chat UI state, message history, "thinking" state. |
-| `store/useTicketStore.ts` | ✅ Complete | **New.** Manages ticket list, creation, and current ticket selection. |
-| `store/useNotificationStore.ts`| ✅ Complete | **New.** Manages notifications list, unread count, and read status. |
+| Store | Status | Capabilities | Missing / To-Do |
+| :--- | :--- | :--- | :--- |
+| `useAuthStore` | ✅ **Done** | Mock login, logout, loading states. | Persistent session storage (localStorage). |
+| `useChatbotStore` | ✅ **Done** | Open/Close, Message history, Mock AI "Thinking". | Real AI integration, Guest ticket context. |
+| `useTicketStore` | ✅ **Done** | Fetch list, Create ticket, Select ticket. | Filter/Sort logic is currently inside the Component. |
+| `useNotificationStore`| ✅ **Done** | Add, Mark Read, Unread Count, Mark All Read. | Polling/WebSocket integration. |
+| `useAnalyticsStore` | ❌ **Missing** | N/A | State for chart builder and filtering. |
 
-### **Services (Mock Layer)**
-| File | Status | Description |
+### **Services & API Layer**
+| Service | Status | Notes |
 | :--- | :--- | :--- |
-| `services/mockApi.ts` | 🟡 Partial | Auth & Analytics mocks. |
-| `services/ticketsApi.ts` | ✅ Complete | **New.** Mock CRUD operations for tickets (Create, Get All, Get By ID). |
-
-### **UI Components**
-| File | Status | Description |
-| :--- | :--- | :--- |
-| `ui/Base.tsx` | ✅ Complete | Button, Card, Input, Badge. |
-| `ui/Modal.tsx` | ✅ Complete | **New.** Reusable animated modal wrapper. |
-| `layout/Sidebar.tsx` | ✅ Complete | Role-based navigation visibility. |
-| `layout/Header.tsx` | ✅ Complete | **Updated.** Now includes working **Notification Dropdown** and User Profile. |
-| `chatbot/ChatWidget.tsx` | ✅ Complete | **Updated.** Added Voice Recorder and Image Uploader buttons (UI). |
-| `chatbot/VoiceRecorder.tsx` | ✅ Complete | **New.** UI for recording state with mock completion. |
-| `chatbot/ImageUploader.tsx` | ✅ Complete | **New.** Hidden file input trigger for image uploads. |
-
-### **Feature Components**
-| File | Status | Description |
-| :--- | :--- | :--- |
-| `tickets/TicketCard.tsx` | ✅ Complete | **New.** Summary card with status coloring and priority badges. |
-| `analytics/Charts.tsx` | ✅ Complete | Reusable Recharts wrappers (Area, Bar, Pie, KPI Grid). |
-
-### **Pages**
-| File | Status | Description |
-| :--- | :--- | :--- |
-| `pages/Dashboard.tsx` | ✅ Complete | KPI Grid, Trend Charts, Technician Alerts. |
-| `pages/AuthPage.tsx` | ✅ Complete | Login UI. |
-| `pages/tickets/TicketList.tsx` | ✅ Complete | **New.** Filterable list of tickets fetching from store. |
-| `pages/tickets/TicketCreate.tsx`| ✅ Complete | **New.** Form for creating tickets with metadata. |
-| `pages/analytics/AnalyticsPage.tsx`| ✅ Complete | **New.** Dedicated dashboard for Managers/Admins. |
-| `pages/admin/UserList.tsx` | ✅ Complete | **New.** Admin view for listing users (CRUD UI only). |
+| `services/mockApi.ts` | 🟡 **Partial** | Handles Auth & basic Analytics. **Overlap:** Contains some ticket logic duplicating `ticketsApi`. |
+| `services/ticketsApi.ts`| ✅ **Done** | Dedicated mock CRUD for tickets including `getTicketById` and `getTimeline`. | `updateTicket`, `uploadAttachment` methods are missing. |
+| `services/adminApi.ts` | ❌ **Missing** | Admin actions (User CRUD) currently rely on hardcoded data in components. |
+| `services/chatbotApi.ts`| ❌ **Missing** | Chat logic is hardcoded in store. Needs dedicated service. |
 
 ---
 
-## 2. Role-Based Implementation Matrix
+## 2. Feature Implementation Detail
 
-### **1. Guest (Unauthenticated)**
-*   **Implemented:**
-    *   Auth Page.
-    *   Chatbot UI (Global).
-*   **Not Implemented:**
-    *   Guest Ticket Persistence (LocalStorage).
-    *   Ticket Claiming workflow.
+### **A. Authentication & Layout**
+*   **Login:** ✅ Functional (Mock). Supports specific test emails (`consumer@test.com`, etc.).
+*   **Sidebar:** ✅ Functional. Correctly hides links based on `UserRole`.
+*   **Header:** ✅ Functional.
+    *   **Notifications:** Dropdown UI works, badges update, click-to-read works.
+    *   **Profile:** Static display of current user.
 
-### **2. Consumer**
-*   **Implemented:**
-    *   **Ticket Management:** Can view list (`/tickets`) and create new tickets (`/tickets/create`).
-    *   **Notifications:** Can receive and view notifications in Header.
-    *   **Chatbot:** Can simulate voice/image input.
-*   **Not Implemented:**
-    *   Ticket Detail View (Timeline/Comments).
+### **B. Ticketing Module**
+*   **List View (`TicketList.tsx`):**
+    *   ✅ UI: Grid/List of `TicketCard`.
+    *   ✅ Logic: Client-side search and filtering.
+*   **Create View (`TicketCreate.tsx`):**
+    *   ✅ UI: Form with Sector, Type, Priority, Title, Description.
+    *   ✅ Logic: Submits to store, redirects to list.
+*   **Detail View (`TicketDetail.tsx`):**
+    *   ✅ **Page:** Layout with sidebar, metadata, and status badges.
+    *   ✅ **SLA Indicator:** `SLAIndicator.tsx` visualizes remaining time with progress bar and coloring.
+    *   ✅ **Attachments:** `AttachmentPreview.tsx` handles file icons (PDF/Image) and download mocks.
+    *   ✅ **Timeline:** `TicketTimeline.tsx` renders history events (Status Change, Comments, Assignments).
+    *   ✅ **Comments:** Placeholder UI for adding comments exists.
 
-### **3. Technician**
-*   **Implemented:**
-    *   Dashboard Active Assignment Alert.
-    *   View Ticket List.
-*   **Not Implemented:**
-    *   **Ticket Detail View:** Critical for technicians to resolve jobs.
-    *   Job Acceptance/Resolution workflow.
+### **C. Chatbot Module**
+*   **UI (`ChatWidget.tsx`):**
+    *   ✅ Floating widget with open/close animations.
+    *   ✅ Message bubbles (User vs Bot).
+    *   ✅ "Thinking" typing indicator.
+*   **Inputs:**
+    *   ✅ **Voice:** `VoiceRecorder.tsx` exists. *Note: Logic is simulated.*
+    *   ✅ **Image:** `ImageUploader.tsx` exists. *Note: Selects file but only sends text.*
+*   **Logic:**
+    *   ❌ **Missing:** No real LLM connection. Guest ticket creation flow is not implemented.
 
-### **4. Manager**
-*   **Implemented:**
-    *   **Analytics:** Full access to `/analytics` dashboard with multi-chart view.
-*   **Not Implemented:**
-    *   Analytics Builder (Custom chart creation).
-    *   Technician Assignment UI.
+### **D. Analytics Module**
+*   **Dashboard (`AnalyticsPage.tsx`):**
+    *   ✅ UI: Grid layout with 3 chart types.
+    *   ✅ Charts: `TrendChart` (Area), `DistributionChart` (Pie), `BarChartComponent`.
+*   **Data:**
+    *   ✅ Fetches mock stats from `mockApi`.
 
-### **5. Admin**
-*   **Implemented:**
-    *   **User Management:** View list of users at `/admin`.
-*   **Not Implemented:**
-    *   User Edit/Create Forms.
-    *   System Settings.
-    *   Chatbot Prompt Editor.
+### **E. Admin Module**
+*   **User Management:**
+    *   ✅ **List:** `UserList.tsx` displays users with roles.
+    *   ❌ **CRUD:** Edit/Delete buttons exist but have no handlers. Create User modal is missing.
+
+### **F. Notifications Module**
+*   **List View (`NotificationsPage.tsx`):**
+    *   ✅ UI: Dedicated page with tabs for "All" vs "Unread".
+    *   ✅ Logic: Filters notification history, supports "Mark All as Read", links to tickets.
 
 ---
 
-## 3. Pending Implementation Tasks (To-Do)
+## 3. Gap Analysis & Next Steps
 
-### **High Priority**
-1.  **Ticket Detail Page (`/tickets/:id`):**
-    *   Display ticket metadata.
-    *   Timeline view (History).
-    *   Comments section.
-    *   Attachment viewer.
-    *   Technician controls (Resolve/Close).
-2.  **Admin Expansion:**
-    *   Create/Edit User Modals.
-    *   Sector & Service Management pages.
-3.  **Chatbot Logic:**
-    *   Connect UI to real LLM (Gemini/OpenAI) instead of Echo.
-    *   Implement "Create Ticket from Chat" flow.
+### **Immediate Priorities**
+1.  **Admin Functions:**
+    *   Implement "Create User" Modal.
+    *   Wire up Delete/Edit actions in `UserList`.
 
-### **Medium Priority**
-1.  **Analytics Builder:**
-    *   Drag-and-drop or wizard interface for custom charts.
-2.  **Profile Settings:**
-    *   User avatar upload and password reset.
+### **Logic Implementation Needed**
+1.  **Ticket Interactive Features:**
+    *   Make "Update Status" button in Ticket Detail functional.
+    *   Make "Post Comment" functional (update local state/store).
+2.  **Chatbot Realism:**
+    *   Implement actual browser `SpeechRecognition` in `VoiceRecorder`.
+3.  **Refactor Services:**
+    *   Consolidate `mockApi.ts` and `ticketsApi.ts`.
 
-### **Backend Integration**
-*   Currently running on `mockApi` and `ticketsApi` (mock).
-*   Needs connection to Flask/Python backend via `fetch` or `axios`.
+---
+
+## 4. Current Routes Map
+
+| Path | Component | Status |
+| :--- | :--- | :--- |
+| `/login` | `AuthPage` | ✅ Active |
+| `/dashboard` | `Dashboard` | ✅ Active |
+| `/tickets` | `TicketList` | ✅ Active |
+| `/tickets/create` | `TicketCreate` | ✅ Active |
+| `/tickets/:id` | `TicketDetail` | ✅ Active |
+| `/analytics` | `AnalyticsPage` | ✅ Active |
+| `/admin` | `UserList` | ✅ Active |
+| `/notifications` | `NotificationsPage` | ✅ **Active** |

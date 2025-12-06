@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Ticket, 
@@ -14,6 +14,7 @@ import { UserRole } from '../../types';
 
 export const Sidebar: React.FC = () => {
   const { user, logout } = useAuthStore();
+  const location = useLocation();
 
   const links = [
     { to: '/dashboard', icon: Home, label: 'Dashboard', roles: [] },
@@ -42,11 +43,13 @@ export const Sidebar: React.FC = () => {
         {links.map((link) => {
           if (link.roles.length > 0 && user && !link.roles.includes(user.role)) return null;
           
+          const isActive = location.pathname === link.to || (link.to !== '/dashboard' && location.pathname.startsWith(link.to));
+          
           return (
-            <NavLink
+            <Link
               key={link.to}
               to={link.to}
-              className={({ isActive }) => `
+              className={`
                 flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200
                 ${isActive 
                   ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20' 
@@ -55,7 +58,7 @@ export const Sidebar: React.FC = () => {
             >
               <link.icon className="w-5 h-5" />
               <span className="font-medium">{link.label}</span>
-            </NavLink>
+            </Link>
           );
         })}
       </nav>
