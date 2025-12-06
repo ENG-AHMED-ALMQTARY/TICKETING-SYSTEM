@@ -1,0 +1,8 @@
+{
+  "name": "Smart Product Ticketing & Market Oversight System",
+  "description": "Enterprise-grade ticketing and market oversight system with role-based access, AI chatbot, and advanced analytics.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
